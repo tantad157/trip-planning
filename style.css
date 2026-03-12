@@ -117,7 +117,11 @@ body {
 
 .header-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.75rem;
+}
+
+.header-actions .btn {
+  min-height: 44px;
 }
 
 /* Drop zone */
@@ -218,11 +222,14 @@ body {
 .btn-icon {
   padding: 0.5rem;
   font-size: 1.1rem;
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .btn-sm {
-  padding: 0.35rem 0.75rem;
+  padding: 0.5rem 0.875rem;
   font-size: 0.85rem;
+  min-height: 44px;
 }
 
 .btn-danger {
@@ -235,13 +242,14 @@ body {
 }
 
 .btn-remove {
-  position: absolute;
-  top: 0.25rem;
-  right: 0.25rem;
-  padding: 0.25rem 0.5rem;
+  position: static;
+  padding: 0.5rem;
+  min-width: 44px;
+  min-height: 44px;
   font-size: 1.25rem;
   line-height: 1;
   opacity: 0.6;
+  margin-left: 0.5rem;
 }
 
 .btn-remove:hover {
@@ -267,11 +275,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 1.25rem;
+  padding: 1.25rem 1.25rem;
   background: var(--color-primary-muted);
   cursor: pointer;
   user-select: none;
   transition: background var(--transition);
+  border-bottom: 2px solid var(--color-border);
 }
 
 .day-header-sticky {
@@ -279,7 +288,7 @@ body {
   top: 0;
   z-index: 5;
   background: var(--color-primary-muted);
-  box-shadow: 0 1px 0 var(--color-border);
+  box-shadow: 0 2px 4px rgba(45, 42, 38, 0.08);
 }
 
 .day-header:hover {
@@ -289,15 +298,17 @@ body {
 .day-header h3 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 1.35rem;
+  font-weight: 700;
   color: var(--color-text);
+  letter-spacing: 0.02em;
 }
 
 .day-meta {
-  font-size: 0.85rem;
-  color: var(--color-text-muted);
-  margin-top: 0.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-top: 0.35rem;
 }
 
 .day-location:not(:empty)::before {
@@ -362,8 +373,12 @@ body {
 .timeline-item {
   display: flex;
   gap: 0;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.5rem;
   position: relative;
+}
+
+.timeline-item--expanded {
+  margin-bottom: 1.5rem;
 }
 
 .timeline-item:last-child .timeline-line {
@@ -431,30 +446,34 @@ body {
 .timeline-card {
   background: var(--color-surface);
   border-radius: var(--radius-md);
-  padding: 1rem 1rem 1.25rem;
+  padding: 0.75rem 1rem;
   position: relative;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--color-border);
+  transition: padding var(--transition);
 }
 
-.timeline-card-top {
+.timeline-card-compact {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  margin-bottom: 0.75rem;
+  cursor: pointer;
+  min-height: 2.5rem;
 }
 
 .timeline-card-top-left {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.5rem;
   min-width: 0;
+  flex: 1;
 }
 
 .timeline-activity-icon {
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex-shrink: 0;
   border-radius: 999px;
   background: var(--color-surface-alt);
   color: var(--color-text-muted);
@@ -464,34 +483,59 @@ body {
 }
 
 .icon-activity {
-  width: 1rem;
-  height: 1rem;
+  width: 1.15rem;
+  height: 1.15rem;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-.timeline-time-badge {
-  display: inline-block;
+.timeline-time-inline {
+  display: none;
   font-size: 0.8rem;
   font-weight: 700;
   color: var(--color-primary);
-  background: var(--color-primary-muted);
-  padding: 0.35rem 0.65rem;
-  border-radius: var(--radius-sm);
   outline: none;
   border: 1px solid transparent;
-  transition: border-color var(--transition), background var(--transition);
+  border-radius: 4px;
+  padding: 2px 4px;
+  min-width: 4em;
 }
 
-.timeline-time-badge:focus {
+.timeline-time-inline:focus {
   border-color: var(--color-primary);
   background: var(--color-surface);
 }
 
 .timeline-card .btn-remove {
-  position: static;
-  margin-left: auto;
   flex-shrink: 0;
+}
+
+.timeline-card-expanded {
+  display: none;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.timeline-item--expanded .timeline-card-expanded {
+  display: block;
+}
+
+.timeline-item--expanded .timeline-card {
+  padding: 1rem 1rem 1.25rem;
+}
+
+.timeline-item:not(.timeline-item--expanded) .timeline-activity {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.timeline-item--expanded .timeline-activity {
+  white-space: pre-line;
 }
 
 .timeline-card-location-row {
@@ -539,6 +583,34 @@ body {
   font-weight: 400;
 }
 
+.timeline-card-maps-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.timeline-card-maps-row .btn-map {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.timeline-maps-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.5rem 0.75rem;
+  font-family: inherit;
+  font-size: 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+}
+
+.timeline-maps-input::placeholder {
+  color: var(--color-text-muted);
+}
+
 .btn-map {
   flex-shrink: 0;
   color: var(--color-primary);
@@ -553,12 +625,13 @@ body {
 }
 
 .timeline-activity {
+  flex: 1;
+  min-width: 0;
   font-size: 0.9rem;
   line-height: 1.6;
   color: var(--color-text);
-  white-space: pre-line;
   word-break: break-word;
-  margin: 0 0 0.5rem;
+  margin: 0;
   outline: none;
   border: 1px solid transparent;
   border-radius: 4px;
@@ -569,6 +642,10 @@ body {
 .timeline-activity:focus {
   border-color: var(--color-primary);
   background: var(--color-surface);
+}
+
+.timeline-item--expanded .timeline-activity {
+  margin-bottom: 0.5rem;
 }
 
 .timeline-notes {
@@ -605,19 +682,29 @@ body {
 .timeline-card--transport .timeline-activity-icon { color: #6d573d; background: #f1e7dd; }
 .timeline-card--hotel .timeline-activity-icon { color: #915635; background: #f8e9de; }
 .timeline-card--activity .timeline-activity-icon { color: #486885; background: #e4edf5; }
+.timeline-card:not([data-activity-type]) .timeline-activity-icon,
+.timeline-card[data-activity-type=""] .timeline-activity-icon { color: var(--color-text-muted); background: var(--color-surface-alt); }
 
 .day-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.75rem;
   margin-top: 1rem;
   padding-top: 1rem;
   border-top: 1px solid var(--color-border);
+}
+
+.day-actions .btn {
+  min-height: 44px;
 }
 
 .day-add-section {
   margin-top: 1rem;
   padding-top: 1rem;
   border-top: 1px solid var(--color-border);
+}
+
+.day-add-section .btn {
+  min-height: 44px;
 }
 
 /* Modal */
@@ -737,7 +824,7 @@ body {
   cursor: pointer;
 }
 
-/* Mobile: compact timeline, rely on card time badge */
+/* Mobile: compact timeline, show inline time in card */
 @media (max-width: 639px) {
   .timeline-item {
     gap: 0.55rem;
@@ -746,6 +833,10 @@ body {
 
   .timeline-time-col {
     display: none;
+  }
+
+  .timeline-time-inline {
+    display: inline-block;
   }
 
   .timeline-track-col {

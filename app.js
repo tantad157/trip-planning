@@ -12,7 +12,7 @@
 
   let tripData = null;
 
-  /** Migrate old data: note -> notes, ensure location exists */
+  /** Migrate old data: note -> notes, ensure location and mapsUrl exist */
   function migrateData(data) {
     if (!data?.days) return data;
     data.days.forEach((day) => {
@@ -20,6 +20,7 @@
       day.items.forEach((item) => {
         if ("note" in item && !("notes" in item)) item.notes = item.note || "";
         if (!("location" in item)) item.location = "";
+        if (!("mapsUrl" in item)) item.mapsUrl = "";
       });
     });
     return data;
@@ -93,6 +94,7 @@
           o: it.location,
           a: it.activity,
           n: it.notes ?? it.note ?? "",
+          u: it.mapsUrl ?? "",
         })),
       })),
     };
@@ -111,6 +113,7 @@
           location: it.o || "",
           activity: it.a || "",
           notes: it.n ?? "",
+          mapsUrl: it.u ?? "",
         })),
       })),
     };
@@ -152,6 +155,7 @@
       location: "",
       activity: "",
       notes: "",
+      mapsUrl: "",
     });
     saveTrip();
     renderTrip();
@@ -171,7 +175,7 @@
       label: `Day ${n}`,
       date: "",
       location: "",
-      items: [{ time: "", location: "", activity: "", notes: "" }],
+      items: [{ time: "", location: "", activity: "", notes: "", mapsUrl: "" }],
     });
     saveTrip();
     renderTrip();
@@ -197,9 +201,11 @@
     saveTrip();
   }
 
-  function getMapsUrl(location) {
-    if (!location || !location.trim()) return null;
-    return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(location.trim());
+  function resolveMapsUrl(mapsUrl) {
+    if (!mapsUrl || !mapsUrl.trim()) return null;
+    const s = mapsUrl.trim();
+    if (/^https?:\/\//i.test(s)) return s;
+    return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(s);
   }
 
   /** Return icon name for activity type (food, transport, hotel, activity) for styling */
@@ -225,7 +231,7 @@
     if (type === "activity") {
       return '<svg class="icon-activity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v6M12 16v6M4.93 4.93l4.24 4.24M14.83 14.83l4.24 4.24M2 12h6M16 12h6M4.93 19.07l4.24-4.24M14.83 9.17l4.24-4.24"/></svg>';
     }
-    return "";
+    return '<svg class="icon-activity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>';
   }
 
   const PIN_ICON =
@@ -275,7 +281,7 @@
                   (item, itemIndex) => {
                     const notes = item.notes ?? item.note ?? "";
                     const location = item.location ?? "";
-                    const mapsUrl = getMapsUrl(location);
+                    const mapsUrl = item.mapsUrl ?? "";
                     const iconType = getActivityIcon(item.activity, location);
                     const iconSvg = getActivityIconSvg(iconType);
                     return `
@@ -289,20 +295,25 @@
                   </div>
                   <div class="timeline-content-col">
                     <div class="timeline-card ${iconType ? "timeline-card--" + iconType : ""}" data-activity-type="${escapeHtml(iconType)}">
-                      <div class="timeline-card-top">
+                      <div class="timeline-card-compact" role="button" tabindex="0">
                         <div class="timeline-card-top-left">
-                          ${iconSvg ? `<span class="timeline-activity-icon" aria-hidden="true">${iconSvg}</span>` : ""}
-                          <span class="timeline-time-badge" contenteditable="true" data-field="time">${escapeHtml(item.time || "")}</span>
+                          <span class="timeline-time-inline" contenteditable="true" data-field="time">${escapeHtml(item.time || "")}</span>
+                          <span class="timeline-activity-icon" aria-hidden="true">${iconSvg}</span>
+                          <p class="timeline-activity" contenteditable="true" data-field="activity">${escapeHtml(formatForDisplay(item.activity || ""))}</p>
                         </div>
                         <button type="button" class="btn btn-ghost btn-icon btn-remove" aria-label="Remove item">×</button>
                       </div>
-                      <div class="timeline-card-location-row">
-                        ${location ? PIN_ICON : ""}
-                        <h4 class="timeline-location" contenteditable="true" data-field="location" data-placeholder="Location">${escapeHtml(location)}</h4>
-                        ${mapsUrl ? `<a href="${escapeHtml(mapsUrl)}" target="_blank" rel="noopener" class="btn-map" title="Open in Google Maps" aria-label="Open in Google Maps">${MAP_ICON}</a>` : ""}
+                        <div class="timeline-card-expanded">
+                        <div class="timeline-card-location-row">
+                          ${location ? PIN_ICON : ""}
+                          <h4 class="timeline-location" contenteditable="true" data-field="location" data-placeholder="Location">${escapeHtml(location)}</h4>
+                        </div>
+                        <div class="timeline-card-maps-row">
+                          <input type="text" class="timeline-maps-input" data-field="mapsUrl" placeholder="Paste Maps URL or address..." value="${escapeHtml(mapsUrl)}" />
+                          <button type="button" class="btn btn-secondary btn-sm btn-map" data-action="open-maps">Open in Maps</button>
+                        </div>
+                        ${notes ? `<div class="timeline-notes" contenteditable="true" data-field="notes">${escapeHtml(formatForDisplay(notes))}</div>` : '<div class="timeline-notes" contenteditable="true" data-field="notes" data-placeholder="Add note..."></div>'}
                       </div>
-                      <p class="timeline-activity" contenteditable="true" data-field="activity">${escapeHtml(formatForDisplay(item.activity || ""))}</p>
-                      ${notes ? `<div class="timeline-notes" contenteditable="true" data-field="notes">${escapeHtml(formatForDisplay(notes))}</div>` : '<div class="timeline-notes" contenteditable="true" data-field="notes" data-placeholder="Add note..."></div>'}
                     </div>
                   </div>
                 </div>
@@ -405,6 +416,44 @@
         } else if (field === "label" && tripData) {
           tripData.title = value || "My Trip";
           saveTrip();
+        }
+      };
+    });
+
+    // Maps URL input
+    $$(".timeline-maps-input").forEach((input) => {
+      input.onblur = () => {
+        const item = input.closest(".timeline-item");
+        if (!item) return;
+        const dayIndex = parseInt(item.dataset.day, 10);
+        const itemIndex = parseInt(item.dataset.item, 10);
+        onItemEdit(dayIndex, itemIndex, "mapsUrl", input.value.trim());
+      };
+    });
+
+    // Open in Maps button
+    $$("[data-action=open-maps]").forEach((btn) => {
+      btn.onclick = () => {
+        const item = btn.closest(".timeline-item");
+        if (!item) return;
+        const input = item.querySelector(".timeline-maps-input");
+        const url = input ? resolveMapsUrl(input.value.trim()) : null;
+        if (url) window.open(url, "_blank", "noopener");
+      };
+    });
+
+    // Timeline item expand/collapse
+    $$(".timeline-card-compact").forEach((el) => {
+      el.onclick = (e) => {
+        if (e.target.closest(".btn-remove")) return;
+        if (e.target.closest("[contenteditable=true]")) return;
+        const item = el.closest(".timeline-item");
+        if (item) item.classList.toggle("timeline-item--expanded");
+      };
+      el.onkeydown = (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          el.click();
         }
       };
     });

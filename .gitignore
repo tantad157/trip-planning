@@ -1,0 +1,8 @@
+# IDE / editor
+.cursor/
+
+# Large binaries
+*.pdf
+
+# OS
+.DS_Store

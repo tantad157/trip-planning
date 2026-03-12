@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Parser test</title>
+</head>
+<body>
+  <h1>Parser test</h1>
+  <p id="status">Loading...</p>
+  <pre id="out"></pre>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="parser.js"></script>
+  <script>
+    const status = document.getElementById('status');
+    const out = document.getElementById('out');
+    const pdfUrl = './Phu%20Quoc%204N3D%202026.pdf';
+    fetch(pdfUrl)
+      .then(r => r.arrayBuffer())
+      .then(buf => {
+        const file = new File([new Blob([buf], { type: 'application/pdf' })], 'test.pdf');
+        return TripParser.parsePdfFile(file);
+      })
+      .then(data => {
+        const dayCount = data.days.length;
+        const itemCount = data.days.reduce((n, d) => n + (d.items ? d.items.length : 0), 0);
+        status.textContent = `Parsed: ${dayCount} days, ${itemCount} activities.`;
+        out.textContent = JSON.stringify({ title: data.title, dayCount, itemCount, days: data.days.map(d => ({ label: d.label, date: d.date, itemCount: (d.items || []).length })) }, null, 2);
+      })
+      .catch(err => {
+        status.textContent = 'Error: ' + err.message;
+        out.textContent = err.stack;
+      });
+  </script>
+</body>
+</html>

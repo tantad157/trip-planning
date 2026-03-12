@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trip Planner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Upload Screen -->
+    <section id="upload-screen" class="screen active">
+      <header class="header">
+        <h1>Trip Planner</h1>
+        <p class="subtitle">Upload your itinerary PDF to get started</p>
+      </header>
+      <div id="drop-zone" class="drop-zone">
+        <div class="drop-zone-content">
+          <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <p class="drop-text">Drag & drop your PDF here</p>
+          <p class="drop-subtext">or click to browse</p>
+          <input type="file" id="file-input" accept=".pdf" hidden>
+        </div>
+      </div>
+      <p id="parse-status" class="parse-status" aria-live="polite"></p>
+    </section>
+
+    <!-- Trip Editor Screen -->
+    <section id="trip-screen" class="screen">
+      <header class="header header-sticky">
+        <div class="header-row">
+          <h1 id="trip-title" class="trip-title" contenteditable="true" data-placeholder="Trip title"></h1>
+          <div class="header-actions">
+            <button id="btn-share" class="btn btn-secondary" type="button" title="Share link">Share</button>
+            <button id="btn-new" class="btn btn-ghost" type="button" title="New trip">New</button>
+          </div>
+        </div>
+      </header>
+      <main id="trip-content" class="trip-content">
+        <!-- Day cards rendered by app.js -->
+      </main>
+    </section>
+  </div>
+
+  <!-- Share Modal -->
+  <div id="share-modal" class="modal" role="dialog" aria-labelledby="share-modal-title" aria-hidden="true">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <h2 id="share-modal-title">Share your trip</h2>
+      <p class="modal-desc">Anyone with this link can view and edit their own copy of the itinerary.</p>
+      <div class="share-link-row">
+        <input type="text" id="share-link-input" class="share-link-input" readonly>
+        <button id="btn-copy" class="btn btn-primary" type="button">Copy</button>
+      </div>
+      <div id="share-qr" class="share-qr" aria-label="QR code for share link"></div>
+      <p id="copy-feedback" class="copy-feedback" aria-live="polite"></p>
+      <button id="btn-close-modal" class="btn btn-ghost" type="button">Close</button>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="parser.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

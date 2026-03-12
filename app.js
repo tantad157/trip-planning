@@ -70,20 +70,71 @@
       const json = LZString.decompressFromEncodedURIComponent(encoded);
       if (!json) return null;
       const data = JSON.parse(json);
-      if (data && data.days && Array.isArray(data.days)) return migrateData(data);
+      if (!data) return null;
+      const full = data.days ? data : expandFromShare(data);
+      return full && full.days ? migrateData(full) : null;
     } catch (e) {
       console.warn("URL decode failed", e);
     }
     return null;
   }
 
+  /** Abbreviate trip data for shorter share URLs (t=title, d=days, l=label, dt=date, o=loc, i=items, m=time, a=activity, n=notes) */
+  function abbreviateForShare(data) {
+    if (!data?.days) return data;
+    return {
+      t: data.title || "My Trip",
+      d: data.days.map((day) => ({
+        l: day.label,
+        dt: day.date,
+        o: day.location,
+        i: (day.items || []).map((it) => ({
+          m: it.time,
+          o: it.location,
+          a: it.activity,
+          n: it.notes ?? it.note ?? "",
+        })),
+      })),
+    };
+  }
+
+  function expandFromShare(abbr) {
+    if (!abbr?.d) return null;
+    return {
+      title: abbr.t || "My Trip",
+      days: abbr.d.map((day) => ({
+        label: day.l || "",
+        date: day.dt || "",
+        location: day.o || "",
+        items: (day.i || []).map((it) => ({
+          time: it.m || "",
+          location: it.o || "",
+          activity: it.a || "",
+          notes: it.n ?? "",
+        })),
+      })),
+    };
+  }
+
   function getShareUrl() {
     if (!tripData) return "";
-    const json = JSON.stringify(tripData);
-    const encoded = LZString.compressToEncodedURIComponent(json);
+    const abbr = abbreviateForShare(tripData);
+    const encoded = LZString.compressToEncodedURIComponent(JSON.stringify(abbr));
     const url = new URL(window.location.href);
     url.hash = "data=" + encoded;
     return url.toString();
+  }
+
+  async function shortenUrlViaProxy(longUrl) {
+    try {
+      const target = "https://is.gd/create.php?format=simple&url=" + encodeURIComponent(longUrl);
+      const res = await fetch("https://corsproxy.io/?" + encodeURIComponent(target));
+      if (!res.ok) return longUrl;
+      const short = await res.text();
+      return short && short.startsWith("http") ? short.trim() : longUrl;
+    } catch (e) {
+      return longUrl;
+    }
   }
 
   function updateTitle() {
@@ -476,29 +527,44 @@
     const feedback = $("#copy-feedback");
     const qrWrap = $("#share-qr");
 
-    function openShareModal() {
-      if (!tripData) return;
-      const url = getShareUrl();
-      if (input) input.value = url;
-      if (qrWrap && url) {
-        qrWrap.innerHTML = "";
+    function renderQrOrFallback(qrWrapEl, url) {
+      if (!qrWrapEl) return;
+      qrWrapEl.innerHTML = "";
+      const maxQrChars = 1200;
+      if (url.length > maxQrChars || typeof QRCode === "undefined") {
+        qrWrapEl.innerHTML =
+          '<p class="share-qr-fallback">URL too long for QR code—use <strong>Copy</strong> to share</p>';
+      } else {
         try {
-          if (typeof QRCode !== "undefined") {
-            new QRCode(qrWrap, {
-              text: url,
-              width: 132,
-              height: 132,
-              colorDark: "#2d2a26",
-              colorLight: "#ffffff",
-              correctLevel: QRCode.CorrectLevel.L,
-            });
-          }
+          new QRCode(qrWrapEl, {
+            text: url,
+            width: 132,
+            height: 132,
+            colorDark: "#2d2a26",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.L,
+          });
         } catch (e) {
           console.warn("QR code generation failed:", e);
+          qrWrapEl.innerHTML =
+            '<p class="share-qr-fallback">QR code unavailable—use <strong>Copy</strong> to share</p>';
         }
       }
+    }
+
+    async function openShareModal() {
+      if (!tripData) return;
+      const longUrl = getShareUrl();
       modal?.classList.add("active");
       modal?.setAttribute("aria-hidden", "false");
+      if (input) input.value = longUrl;
+      if (feedback) feedback.textContent = "";
+      if (qrWrap) {
+        qrWrap.innerHTML = '<p class="share-qr-fallback">Shortening…</p>';
+        const displayUrl = await shortenUrlViaProxy(longUrl);
+        if (input) input.value = displayUrl;
+        renderQrOrFallback(qrWrap, displayUrl);
+      }
       if (feedback) feedback.textContent = "";
     }
 

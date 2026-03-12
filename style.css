@@ -709,6 +709,15 @@ body {
   border-radius: 6px;
 }
 
+.share-qr-fallback {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  text-align: center;
+  line-height: 1.5;
+  padding: 0.5rem;
+}
+
 .current-day-indicator {
   position: fixed;
   right: 1rem;

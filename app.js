@@ -105,9 +105,8 @@
   }
 
   /** Abbreviate trip data for shorter share URLs (t=title, d=days, l=label, dt=date, o=loc, i=items, m=time, a=activity, n=notes). mapsUrl omitted - can be regenerated from location. */
-  function abbreviateForShare(data, options = {}) {
+  function abbreviateForShare(data) {
     if (!data?.days) return data;
-    const stripNotes = options.compact ?? false;
     return {
       t: data.title || "My Trip",
       d: data.days.map((day) => {
@@ -120,10 +119,8 @@
           const item = {};
           if (it.time) item.m = it.time;
           if (it.activity) item.a = it.activity;
-          if (!stripNotes) {
-            const n = it.notes ?? it.note ?? "";
-            if (n) item.n = n;
-          }
+          const n = it.notes ?? it.note ?? "";
+          if (n) item.n = n;
           const itemLoc = it.location ?? "";
           if (itemLoc && itemLoc !== dayLoc) item.o = itemLoc;
           return item;
@@ -167,9 +164,9 @@
     }
   }
 
-  function getShareUrl(options = {}) {
+  function getShareUrl() {
     if (!tripData) return "";
-    const abbr = abbreviateForShare(tripData, options);
+    const abbr = abbreviateForShare(tripData);
     const json = JSON.stringify(abbr);
     let encoded;
     let usePako = false;
@@ -186,9 +183,20 @@
   }
 
   const CORS_PROXIES = [
+    (url) => "https://api.cors.lol/?url=" + encodeURIComponent(url),
     (url) => "https://api.allorigins.win/raw?url=" + encodeURIComponent(url),
     (url) => "https://corsproxy.io/?" + encodeURIComponent(url),
   ];
+
+  function isValidShortUrl(text) {
+    const t = (text || "").trim();
+    if (!t || t.length > 500) return false;
+    if (t.startsWith("http://") || t.startsWith("https://")) {
+      if (/<(html|!DOCTYPE|script)/i.test(t) || /cloudflare|blocked|captcha/i.test(t)) return false;
+      return true;
+    }
+    return false;
+  }
 
   async function shortenUrlViaProxy(longUrl) {
     const target = "https://is.gd/create.php?format=simple&url=" + encodeURIComponent(longUrl);
@@ -197,7 +205,7 @@
         const res = await fetch(toProxyUrl(target));
         if (!res.ok) continue;
         const short = await res.text();
-        if (short && short.startsWith("http")) return short.trim();
+        if (isValidShortUrl(short)) return short.trim();
       } catch (e) {
         /* try next proxy */
       }
@@ -669,15 +677,9 @@
       }
     }
 
-    function getShareUrlForModal() {
-      const compactCheck = $("#share-compact");
-      const compact = compactCheck ? compactCheck.checked : true;
-      return getShareUrl({ compact });
-    }
-
     async function openShareModal() {
       if (!tripData) return;
-      const longUrl = getShareUrlForModal();
+      const longUrl = getShareUrl();
       modal?.classList.add("active");
       modal?.setAttribute("aria-hidden", "false");
       if (input) input.value = longUrl;
@@ -702,13 +704,6 @@
       modal?.classList.remove("active");
       modal?.setAttribute("aria-hidden", "true");
     }
-
-    $("#share-compact")?.addEventListener("change", () => {
-      if (!tripData) return;
-      const url = getShareUrlForModal();
-      if (input) input.value = url;
-      if (qrWrap) renderQrOrFallback(qrWrap, url);
-    });
 
     copyBtn?.addEventListener("click", () => {
       if (!input) return;

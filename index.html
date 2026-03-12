@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Trip Planner</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..72,600;9..72,700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -14,6 +16,7 @@
     <!-- Upload Screen -->
     <section id="upload-screen" class="screen active">
       <header class="header">
+        <img src="favicon.svg" alt="" class="header-icon" width="48" height="48">
         <h1>Trip Planner</h1>
         <p class="subtitle">Upload your itinerary PDF to get started</p>
       </header>
@@ -56,10 +59,6 @@
     <div class="modal-content">
       <h2 id="share-modal-title">Share your trip</h2>
       <p class="modal-desc">Anyone with this link can view and edit their own copy of the itinerary.</p>
-      <label class="share-compact-toggle">
-        <input type="checkbox" id="share-compact" checked>
-        Compact (shorter URL, omits notes)
-      </label>
       <div class="share-link-row">
         <input type="text" id="share-link-input" class="share-link-input" readonly>
         <button id="btn-copy" class="btn btn-primary" type="button">Copy</button>

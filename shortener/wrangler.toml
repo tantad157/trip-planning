@@ -3,8 +3,8 @@ main = "src/index.ts"
 compatibility_date = "2024-01-01"
 
 kv_namespaces = [
-  { binding = "SHORTENER_KV", id = "REPLACE_WITH_KV_ID", preview_id = "REPLACE_WITH_PREVIEW_ID" }
+  { binding = "SHORTENER_KV", id = "6cccd3e2f6d44ddc9ce1ec1a78bcf879", preview_id = "6f4868977b004caca26a4c6468b7b95b" }
 ]
 
 [vars]
-HOST_URL = "https://trip-shortener.REPLACE.workers.dev"
+HOST_URL = "https://trip-shortener.tanta4134.workers.dev"

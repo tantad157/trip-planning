@@ -164,6 +164,18 @@
     }
   }
 
+  function getSuggestedSlug() {
+    if (!tripData) return "trip";
+    const title = (tripData.title || "trip").trim();
+    const slug = title
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9-]/g, "")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+    return slug || "trip";
+  }
+
   function getShareUrl() {
     if (!tripData) return "";
     const abbr = abbreviateForShare(tripData);
@@ -180,37 +192,6 @@
     const url = new URL(window.location.href);
     url.hash = usePako ? "d=" + encoded : "data=" + encoded;
     return url.toString();
-  }
-
-  const CORS_PROXIES = [
-    (url) => "https://api.cors.lol/?url=" + encodeURIComponent(url),
-    (url) => "https://api.allorigins.win/raw?url=" + encodeURIComponent(url),
-    (url) => "https://corsproxy.io/?" + encodeURIComponent(url),
-  ];
-
-  function isValidShortUrl(text) {
-    const t = (text || "").trim();
-    if (!t || t.length > 500) return false;
-    if (t.startsWith("http://") || t.startsWith("https://")) {
-      if (/<(html|!DOCTYPE|script)/i.test(t) || /cloudflare|blocked|captcha/i.test(t)) return false;
-      return true;
-    }
-    return false;
-  }
-
-  async function shortenUrlViaProxy(longUrl) {
-    const target = "https://is.gd/create.php?format=simple&url=" + encodeURIComponent(longUrl);
-    for (const toProxyUrl of CORS_PROXIES) {
-      try {
-        const res = await fetch(toProxyUrl(target));
-        if (!res.ok) continue;
-        const short = await res.text();
-        if (isValidShortUrl(short)) return short.trim();
-      } catch (e) {
-        /* try next proxy */
-      }
-    }
-    return longUrl;
   }
 
   function updateTitle() {
@@ -291,24 +272,13 @@
     return "";
   }
 
-  function getActivityIconSvg(type) {
-    if (type === "food") {
-      return '<svg class="icon-activity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 3v8M7 3v8M4 7h3M12 3v18M12 12c3 0 5-2 5-5V3"/></svg>';
-    }
-    if (type === "transport") {
-      return '<svg class="icon-activity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="11" rx="2"/><path d="M7 16l-1.5 3M17 16l1.5 3M7 10h.01M17 10h.01"/></svg>';
-    }
-    if (type === "hotel") {
-      return '<svg class="icon-activity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v13"/><path d="M4 12h16M8 9h.01M12 9h.01M16 9h.01"/></svg>';
-    }
-    if (type === "activity") {
-      return '<svg class="icon-activity" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.14 1.91 6.09L12 17.77 5.09 19.5 7 13.41 2 9.27l6.91-1.01L12 2z"/></svg>';
-    }
-    return '<svg class="icon-activity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>';
+  function fallbackGetActivityIconSvg(type) {
+    if (typeof ICONS !== "undefined" && ICONS[type]) return ICONS[type];
+    if (typeof ICONS !== "undefined" && ICONS.default) return ICONS.default;
+    return '<svg class="icon-activity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c-3.3 0-6 2.7-6 6 0 4.5 6 10 6 10s6-5.5 6-10c0-3.3-2.7-6-6-6z"/><circle cx="12" cy="8" r="2.5"/></svg>';
   }
-
-  const PIN_ICON =
-    '<svg class="icon-pin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>';
+  const getIconSvg = typeof getActivityIconSvg === "function" ? getActivityIconSvg : fallbackGetActivityIconSvg;
+  const PIN_ICON = (typeof ICONS !== "undefined" && ICONS.pin) ? ICONS.pin : '<svg class="icon-pin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>';
 
   function renderTrip() {
     const container = $("#trip-content");
@@ -345,9 +315,7 @@
                 <span class="day-location" contenteditable="${ce}" data-field="location">${escapeHtml(day.location)}</span>
               </p>
             </div>
-            <svg class="day-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
+            ${(typeof ICONS !== "undefined" && ICONS.chevronDown) ? ICONS.chevronDown : '<svg class="day-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>'}
           </div>
           <div class="day-body">
             <div class="timeline">
@@ -358,7 +326,7 @@
                     const location = item.location ?? "";
                     const mapsUrl = item.mapsUrl ?? "";
                     const iconType = getActivityIcon(item.activity, location);
-                    const iconSvg = getActivityIconSvg(iconType);
+                    const iconSvg = getIconSvg(iconType);
                     return `
                 <div class="timeline-item" data-day="${dayIndex}" data-item="${itemIndex}">
                   <div class="timeline-time-col">
@@ -426,9 +394,6 @@
     updateModeButton();
     bindTripEvents();
   }
-
-  const MAP_ICON =
-    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>';
 
   function escapeHtml(str) {
     if (!str) return "";
@@ -594,6 +559,11 @@
 
     if (!dropZone || !fileInput) return;
 
+    const dropIconWrap = dropZone.querySelector(".drop-icon-wrap");
+    if (dropIconWrap && typeof ICONS !== "undefined" && ICONS.upload) {
+      dropIconWrap.innerHTML = ICONS.upload;
+    }
+
     function setStatus(msg, isError = false) {
       if (statusEl) {
         statusEl.textContent = msg;
@@ -651,6 +621,7 @@
     const backdrop = modal?.querySelector(".modal-backdrop");
     const feedback = $("#copy-feedback");
     const qrWrap = $("#share-qr");
+    const slugHint = $("#share-slug-hint");
 
     function renderQrOrFallback(qrWrapEl, url) {
       if (!qrWrapEl) return;
@@ -677,20 +648,24 @@
       }
     }
 
-    async function openShareModal() {
+    function openShareModal() {
       if (!tripData) return;
       const longUrl = getShareUrl();
+      const slug = getSuggestedSlug();
       modal?.classList.add("active");
       modal?.setAttribute("aria-hidden", "false");
       if (input) input.value = longUrl;
       if (feedback) feedback.textContent = "";
-      if (qrWrap) {
-        qrWrap.innerHTML = '<p class="share-qr-fallback">Shortening…</p>';
-        const displayUrl = await shortenUrlViaProxy(longUrl);
-        if (input) input.value = displayUrl;
-        renderQrOrFallback(qrWrap, displayUrl);
+      if (slugHint) {
+        slugHint.textContent = "";
+        slugHint.innerHTML =
+          'Add to <code>.github/urls.yml</code>: <code>' +
+          escapeHtml(slug) +
+          ': "' +
+          escapeHtml(longUrl) +
+          '"</code>';
       }
-      if (feedback) feedback.textContent = "";
+      if (qrWrap) renderQrOrFallback(qrWrap, longUrl);
     }
 
     document.addEventListener("click", (e) => {

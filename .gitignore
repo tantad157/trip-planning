@@ -1,6 +1,12 @@
 # IDE / editor
 .cursor/
 
+# Build output
+dist/
+
+# Dependencies
+node_modules/
+
 # Large binaries
 *.pdf
 

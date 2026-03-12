@@ -9,7 +9,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..72,600;9..72,700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="app">
@@ -22,11 +21,7 @@
       </header>
       <div id="drop-zone" class="drop-zone">
         <div class="drop-zone-content">
-          <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="17 8 12 3 7 8"/>
-            <line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
+          <span class="drop-icon-wrap"><svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></span>
           <p class="drop-text">Drag & drop your PDF here</p>
           <p class="drop-subtext">or click to browse</p>
           <input type="file" id="file-input" accept=".pdf" hidden>
@@ -58,11 +53,12 @@
     <div class="modal-backdrop"></div>
     <div class="modal-content">
       <h2 id="share-modal-title">Share your trip</h2>
-      <p class="modal-desc">Anyone with this link can view and edit their own copy of the itinerary.</p>
+      <p class="modal-desc">Anyone with this link can view and edit their own copy of the itinerary. Copy the link below, or add a short link in your short-links repo.</p>
       <div class="share-link-row">
         <input type="text" id="share-link-input" class="share-link-input" readonly>
         <button id="btn-copy" class="btn btn-primary" type="button">Copy</button>
       </div>
+      <p id="share-slug-hint" class="share-slug-hint" aria-live="polite"></p>
       <div id="share-qr" class="share-qr" aria-label="QR code for share link"></div>
       <p id="copy-feedback" class="copy-feedback" aria-live="polite"></p>
       <button id="btn-close-modal" class="btn btn-ghost" type="button">Close</button>
@@ -73,7 +69,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="parser.js"></script>
-  <script src="app.js?v=2"></script>
+  <script type="module" src="/src/main.js"></script>
 </body>
 </html>

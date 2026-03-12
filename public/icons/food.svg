@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+  <defs>
+    <linearGradient id="food-g" x1="12" y1="2" x2="12" y2="22" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#e76f51"/>
+      <stop offset="1" stop-color="#d85a3c"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#food-g)" d="M6 2v8h1.5V2H6zm4 0v10c0 1.5 1 2.5 2 2.5s2-1 2-2.5V2h-4zm6 0v6.5c0 1.5 1 2.5 2 2.5s2-1 2-2.5V2h-4z"/>
+</svg>

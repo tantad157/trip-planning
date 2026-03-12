@@ -313,6 +313,8 @@
                     const notes = item.notes ?? item.note ?? "";
                     const location = item.location ?? "";
                     const mapsUrl = item.mapsUrl ?? "";
+                    const activityText = formatForDisplay(item.activity || "");
+                    const hasLongContent = activityText.length > 120 || (activityText.match(/\n/g) || []).length >= 2;
                     const iconType = getActivityIcon(item.activity, location);
                     const iconSvg = getIconSvg(iconType);
                     return `
@@ -330,7 +332,10 @@
                         <div class="timeline-card-top-left">
                           <span class="timeline-time-inline" contenteditable="${ce}" data-field="time">${escapeHtml(item.time || "")}</span>
                           <span class="timeline-activity-icon" aria-hidden="true">${iconSvg}</span>
-                          <p class="timeline-activity" contenteditable="${ce}" data-field="activity">${escapeHtml(formatForDisplay(item.activity || ""))}</p>
+                          <div class="timeline-activity-wrap">
+                            <p class="timeline-activity" contenteditable="${ce}" data-field="activity">${escapeHtml(activityText)}</p>
+                            ${hasLongContent ? '<button type="button" class="btn-show-more" data-action="show-more">Show more</button>' : ""}
+                          </div>
                         </div>
                         ${editMode ? '<button type="button" class="btn btn-ghost btn-icon btn-remove" aria-label="Remove item">×</button>' : ""}
                       </div>
@@ -484,6 +489,14 @@
           e.preventDefault();
           el.click();
         }
+      };
+    });
+
+    $$("[data-action=show-more]").forEach((btn) => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const item = e.target.closest(".timeline-item");
+        if (item) item.classList.add("timeline-item--expanded");
       };
     });
 
@@ -697,12 +710,12 @@
 
   function initNewTrip() {
     $("#btn-new").onclick = () => {
-      tripData = null;
       try {
         localStorage.removeItem(STORAGE_KEY);
       } catch (e) {}
+      tripData = null;
       window.location.hash = "";
-      showScreen("upload-screen");
+      window.location.reload();
     };
   }
 
@@ -730,7 +743,6 @@
     initNewTrip();
     initModeToggle();
 
-    // Priority: URL hash > localStorage > upload screen
     let data = loadFromUrlHash();
     if (data) {
       setTrip(data);

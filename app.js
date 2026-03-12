@@ -164,18 +164,6 @@
     }
   }
 
-  function getSuggestedSlug() {
-    if (!tripData) return "trip";
-    const title = (tripData.title || "trip").trim();
-    const slug = title
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^a-z0-9-]/g, "")
-      .replace(/-+/g, "-")
-      .replace(/^-|-$/g, "");
-    return slug || "trip";
-  }
-
   function getShareUrl() {
     if (!tripData) return "";
     const abbr = abbreviateForShare(tripData);
@@ -621,7 +609,23 @@
     const backdrop = modal?.querySelector(".modal-backdrop");
     const feedback = $("#copy-feedback");
     const qrWrap = $("#share-qr");
-    const slugHint = $("#share-slug-hint");
+    const shortenerUrl = document.body?.dataset?.shortenerUrl?.trim() || "";
+
+    async function shortenViaWorker(longUrl) {
+      if (!shortenerUrl) return longUrl;
+      try {
+        const res = await fetch(shortenerUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: longUrl }),
+        });
+        if (!res.ok) return longUrl;
+        const data = await res.json();
+        return data?.url || longUrl;
+      } catch (e) {
+        return longUrl;
+      }
+    }
 
     function renderQrOrFallback(qrWrapEl, url) {
       if (!qrWrapEl) return;
@@ -648,28 +652,23 @@
       }
     }
 
-    function openShareModal() {
+    async function openShareModal() {
       if (!tripData) return;
       const longUrl = getShareUrl();
-      const slug = getSuggestedSlug();
       modal?.classList.add("active");
       modal?.setAttribute("aria-hidden", "false");
       if (input) input.value = longUrl;
       if (feedback) feedback.textContent = "";
-      if (slugHint) {
-        slugHint.textContent = "";
-        slugHint.innerHTML =
-          'Suggested slug for short link: <code>' +
-          escapeHtml(slug) +
-          '</code>. Add to .github/urls.yml with the link above.';
-      }
-      if (qrWrap) renderQrOrFallback(qrWrap, longUrl);
+      if (qrWrap) qrWrap.innerHTML = shortenerUrl ? '<p class="share-qr-fallback">Shortening…</p>' : "";
+      const displayUrl = await shortenViaWorker(longUrl);
+      if (input) input.value = displayUrl;
+      if (qrWrap) renderQrOrFallback(qrWrap, displayUrl);
     }
 
     document.addEventListener("click", (e) => {
       if (e.target.closest("#btn-share")) {
         e.preventDefault();
-        openShareModal();
+        openShareModal().catch(() => {});
       }
     });
 

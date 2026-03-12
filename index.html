@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..72,600;9..72,700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
+<body data-shortener-url="">
   <div id="app">
     <!-- Upload Screen -->
     <section id="upload-screen" class="screen active">
@@ -53,12 +53,11 @@
     <div class="modal-backdrop"></div>
     <div class="modal-content">
       <h2 id="share-modal-title">Share your trip</h2>
-      <p class="modal-desc">Anyone with this link can view and edit their own copy of the itinerary. Copy the link below, or add a short link in your short-links repo.</p>
+      <p class="modal-desc">Anyone with this link can view and edit their own copy of the itinerary.</p>
       <div class="share-link-row">
         <input type="text" id="share-link-input" class="share-link-input" readonly>
         <button id="btn-copy" class="btn btn-primary" type="button">Copy</button>
       </div>
-      <p id="share-slug-hint" class="share-slug-hint" aria-live="polite"></p>
       <div id="share-qr" class="share-qr" aria-label="QR code for share link"></div>
       <p id="copy-feedback" class="copy-feedback" aria-live="polite"></p>
       <button id="btn-close-modal" class="btn btn-ghost" type="button">Close</button>

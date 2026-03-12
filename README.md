@@ -18,17 +18,16 @@ A simple, modern web app for planning family trips. Upload your itinerary PDF, e
 4. Use **Share** to copy a link. Send it to family members so they can view and edit their own copy.
 5. Use **New** to start over with a fresh upload.
 
-## Short links
+## Short links (Cloudflare Workers)
 
-Share links can be long. For a short, reliable URL, use the self-hosted GitHub Pages shortener in the `short-links/` folder.
+Share links can be long. For short URLs, deploy the Cloudflare Worker in `shortener/`:
 
-1. Generate a share link in the app (Share → Copy).
-2. Create a new GitHub repo and push the contents of `short-links/` to it.
-3. Enable GitHub Pages: **Settings → Pages** → Source: **GitHub Actions**.
-4. Edit `.github/urls.yml` and add a mapping: `slug: "https://...full-link..."`.
-5. Push to `main`. The short URL will be live at `https://<username>.github.io/<repo>/slug`.
+1. `cd shortener && npm install`
+2. `npx wrangler login` and create KV namespaces (see `shortener/README.md`)
+3. `npm run deploy`
+4. Set `data-shortener-url="https://your-worker.workers.dev"` on `<body>` in `index.html`
 
-The share modal suggests a slug from your trip title and shows the exact `urls.yml` line to add. No third-party shorteners or CORS proxies are used.
+When configured, the Share button shortens links via the Worker and shows the short URL. Without it, the full link is shown.
 
 ## Tech
 

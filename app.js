@@ -185,16 +185,24 @@
     return url.toString();
   }
 
+  const CORS_PROXIES = [
+    (url) => "https://api.allorigins.win/raw?url=" + encodeURIComponent(url),
+    (url) => "https://corsproxy.io/?" + encodeURIComponent(url),
+  ];
+
   async function shortenUrlViaProxy(longUrl) {
-    try {
-      const target = "https://is.gd/create.php?format=simple&url=" + encodeURIComponent(longUrl);
-      const res = await fetch("https://corsproxy.io/?" + encodeURIComponent(target));
-      if (!res.ok) return longUrl;
-      const short = await res.text();
-      return short && short.startsWith("http") ? short.trim() : longUrl;
-    } catch (e) {
-      return longUrl;
+    const target = "https://is.gd/create.php?format=simple&url=" + encodeURIComponent(longUrl);
+    for (const toProxyUrl of CORS_PROXIES) {
+      try {
+        const res = await fetch(toProxyUrl(target));
+        if (!res.ok) continue;
+        const short = await res.text();
+        if (short && short.startsWith("http")) return short.trim();
+      } catch (e) {
+        /* try next proxy */
+      }
     }
+    return longUrl;
   }
 
   function updateTitle() {

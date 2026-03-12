@@ -230,7 +230,7 @@
       return '<svg class="icon-activity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v13"/><path d="M4 12h16M8 9h.01M12 9h.01M16 9h.01"/></svg>';
     }
     if (type === "activity") {
-      return '<svg class="icon-activity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v6M12 16v6M4.93 4.93l4.24 4.24M14.83 14.83l4.24 4.24M2 12h6M16 12h6M4.93 19.07l4.24-4.24M14.83 9.17l4.24-4.24"/></svg>';
+      return '<svg class="icon-activity" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.14 1.91 6.09L12 17.77 5.09 19.5 7 13.41 2 9.27l6.91-1.01L12 2z"/></svg>';
     }
     return '<svg class="icon-activity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>';
   }
@@ -313,7 +313,7 @@
                         </div>
                         <div class="timeline-card-maps-row">
                           <input type="text" class="timeline-maps-input" data-field="mapsUrl" placeholder="Paste Maps URL or address..." value="${escapeHtml(mapsUrl)}" ${editMode ? "" : 'readonly'} />
-                          <button type="button" class="btn btn-secondary btn-sm btn-map" data-action="open-maps">Open in Maps</button>
+                          <button type="button" class="btn btn-map" data-action="open-maps">Open in Maps</button>
                         </div>
                         ${notes ? `<div class="timeline-notes" contenteditable="${ce}" data-field="notes">${escapeHtml(formatForDisplay(notes))}</div>` : '<div class="timeline-notes" contenteditable="' + ce + '" data-field="notes" data-placeholder="Add note..."></div>'}
                       </div>

@@ -475,28 +475,39 @@
     const backdrop = modal?.querySelector(".modal-backdrop");
     const feedback = $("#copy-feedback");
     const qrWrap = $("#share-qr");
-    let qrInstance = null;
 
-    $("#btn-share").onclick = () => {
+    function openShareModal() {
       if (!tripData) return;
-      if (input) input.value = getShareUrl();
-      if (qrWrap && input?.value) {
+      const url = getShareUrl();
+      if (input) input.value = url;
+      if (qrWrap && url) {
         qrWrap.innerHTML = "";
-        if (typeof QRCode !== "undefined") {
-          qrInstance = new QRCode(qrWrap, {
-            text: input.value,
-            width: 132,
-            height: 132,
-            colorDark: "#2d2a26",
-            colorLight: "#ffffff",
-            correctLevel: QRCode.CorrectLevel.M,
-          });
+        try {
+          if (typeof QRCode !== "undefined") {
+            new QRCode(qrWrap, {
+              text: url,
+              width: 132,
+              height: 132,
+              colorDark: "#2d2a26",
+              colorLight: "#ffffff",
+              correctLevel: QRCode.CorrectLevel.L,
+            });
+          }
+        } catch (e) {
+          console.warn("QR code generation failed:", e);
         }
       }
       modal?.classList.add("active");
       modal?.setAttribute("aria-hidden", "false");
       if (feedback) feedback.textContent = "";
-    };
+    }
+
+    document.addEventListener("click", (e) => {
+      if (e.target.closest("#btn-share")) {
+        e.preventDefault();
+        openShareModal();
+      }
+    });
 
     function closeModal() {
       modal?.classList.remove("active");

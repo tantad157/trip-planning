@@ -62,14 +62,37 @@
     return null;
   }
 
+  function decompressFromPakoBase64Url(str) {
+    if (!str || typeof pako === "undefined") return null;
+    try {
+      const base64 = str.replace(/-/g, "+").replace(/_/g, "/");
+      const pad = base64.length % 4;
+      const padded = pad ? base64 + "=".repeat(4 - pad) : base64;
+      const binary = atob(padded);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const inflated = pako.inflateRaw(bytes, { to: "string" });
+      return inflated;
+    } catch (e) {
+      return null;
+    }
+  }
+
   function loadFromUrlHash() {
     const hash = window.location.hash.slice(1);
     if (!hash) return null;
     const params = new URLSearchParams(hash);
-    const encoded = params.get("data");
+    const encodedNew = params.get("d");
+    const encodedOld = params.get("data");
+    const encoded = encodedNew ?? encodedOld;
     if (!encoded) return null;
     try {
-      const json = LZString.decompressFromEncodedURIComponent(encoded);
+      let json = null;
+      if (encodedNew) {
+        json = decompressFromPakoBase64Url(encodedNew);
+      } else {
+        json = LZString.decompressFromEncodedURIComponent(encodedOld);
+      }
       if (!json) return null;
       const data = JSON.parse(json);
       if (!data) return null;
@@ -81,23 +104,32 @@
     return null;
   }
 
-  /** Abbreviate trip data for shorter share URLs (t=title, d=days, l=label, dt=date, o=loc, i=items, m=time, a=activity, n=notes) */
-  function abbreviateForShare(data) {
+  /** Abbreviate trip data for shorter share URLs (t=title, d=days, l=label, dt=date, o=loc, i=items, m=time, a=activity, n=notes). mapsUrl omitted - can be regenerated from location. */
+  function abbreviateForShare(data, options = {}) {
     if (!data?.days) return data;
+    const stripNotes = options.compact ?? false;
     return {
       t: data.title || "My Trip",
-      d: data.days.map((day) => ({
-        l: day.label,
-        dt: day.date,
-        o: day.location,
-        i: (day.items || []).map((it) => ({
-          m: it.time,
-          o: it.location,
-          a: it.activity,
-          n: it.notes ?? it.note ?? "",
-          u: it.mapsUrl ?? "",
-        })),
-      })),
+      d: data.days.map((day) => {
+        const dayLoc = day.location ?? "";
+        const dayObj = {};
+        if (day.label) dayObj.l = day.label;
+        if (day.date) dayObj.dt = day.date;
+        if (dayLoc) dayObj.o = dayLoc;
+        dayObj.i = (day.items || []).map((it) => {
+          const item = {};
+          if (it.time) item.m = it.time;
+          if (it.activity) item.a = it.activity;
+          if (!stripNotes) {
+            const n = it.notes ?? it.note ?? "";
+            if (n) item.n = n;
+          }
+          const itemLoc = it.location ?? "";
+          if (itemLoc && itemLoc !== dayLoc) item.o = itemLoc;
+          return item;
+        });
+        return dayObj;
+      }),
     };
   }
 
@@ -105,27 +137,51 @@
     if (!abbr?.d) return null;
     return {
       title: abbr.t || "My Trip",
-      days: abbr.d.map((day) => ({
-        label: day.l || "",
-        date: day.dt || "",
-        location: day.o || "",
-        items: (day.i || []).map((it) => ({
-          time: it.m || "",
-          location: it.o || "",
-          activity: it.a || "",
-          notes: it.n ?? "",
-          mapsUrl: it.u ?? "",
-        })),
-      })),
+      days: abbr.d.map((day) => {
+        const dayLoc = day.o || "";
+        return {
+          label: day.l || "",
+          date: day.dt || "",
+          location: dayLoc,
+          items: (day.i || []).map((it) => ({
+            time: it.m || "",
+            location: it.o ?? dayLoc,
+            activity: it.a || "",
+            notes: it.n ?? "",
+            mapsUrl: "",
+          })),
+        };
+      }),
     };
   }
 
-  function getShareUrl() {
+  function compressToPakoBase64Url(str) {
+    if (typeof pako === "undefined") return null;
+    try {
+      const deflated = pako.deflateRaw(str, { to: "string", level: 9 });
+      const binary = deflated.split("").map((c) => c.charCodeAt(0));
+      const base64 = btoa(String.fromCharCode.apply(null, binary));
+      return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function getShareUrl(options = {}) {
     if (!tripData) return "";
-    const abbr = abbreviateForShare(tripData);
-    const encoded = LZString.compressToEncodedURIComponent(JSON.stringify(abbr));
+    const abbr = abbreviateForShare(tripData, options);
+    const json = JSON.stringify(abbr);
+    let encoded;
+    let usePako = false;
+    if (typeof pako !== "undefined") {
+      encoded = compressToPakoBase64Url(json);
+      usePako = !!encoded;
+    }
+    if (!encoded) {
+      encoded = LZString.compressToEncodedURIComponent(json);
+    }
     const url = new URL(window.location.href);
-    url.hash = "data=" + encoded;
+    url.hash = usePako ? "d=" + encoded : "data=" + encoded;
     return url.toString();
   }
 
@@ -605,9 +661,15 @@
       }
     }
 
+    function getShareUrlForModal() {
+      const compactCheck = $("#share-compact");
+      const compact = compactCheck ? compactCheck.checked : true;
+      return getShareUrl({ compact });
+    }
+
     async function openShareModal() {
       if (!tripData) return;
-      const longUrl = getShareUrl();
+      const longUrl = getShareUrlForModal();
       modal?.classList.add("active");
       modal?.setAttribute("aria-hidden", "false");
       if (input) input.value = longUrl;
@@ -632,6 +694,13 @@
       modal?.classList.remove("active");
       modal?.setAttribute("aria-hidden", "true");
     }
+
+    $("#share-compact")?.addEventListener("change", () => {
+      if (!tripData) return;
+      const url = getShareUrlForModal();
+      if (input) input.value = url;
+      if (qrWrap) renderQrOrFallback(qrWrap, url);
+    });
 
     copyBtn?.addEventListener("click", () => {
       if (!input) return;

@@ -780,6 +780,20 @@ body {
   color: var(--color-text-muted);
 }
 
+.share-compact-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.share-compact-toggle input {
+  cursor: pointer;
+}
+
 .share-link-row {
   display: flex;
   gap: 0.5rem;

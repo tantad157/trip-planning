@@ -56,6 +56,10 @@
     <div class="modal-content">
       <h2 id="share-modal-title">Share your trip</h2>
       <p class="modal-desc">Anyone with this link can view and edit their own copy of the itinerary.</p>
+      <label class="share-compact-toggle">
+        <input type="checkbox" id="share-compact" checked>
+        Compact (shorter URL, omits notes)
+      </label>
       <div class="share-link-row">
         <input type="text" id="share-link-input" class="share-link-input" readonly>
         <button id="btn-copy" class="btn btn-primary" type="button">Copy</button>
@@ -68,6 +72,7 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="parser.js"></script>
   <script src="app.js?v=2"></script>

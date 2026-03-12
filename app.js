@@ -659,11 +659,9 @@
       if (slugHint) {
         slugHint.textContent = "";
         slugHint.innerHTML =
-          'Add to <code>.github/urls.yml</code>: <code>' +
+          'Suggested slug for short link: <code>' +
           escapeHtml(slug) +
-          ': "' +
-          escapeHtml(longUrl) +
-          '"</code>';
+          '</code>. Add to .github/urls.yml with the link above.';
       }
       if (qrWrap) renderQrOrFallback(qrWrap, longUrl);
     }

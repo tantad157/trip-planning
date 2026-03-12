@@ -11,6 +11,7 @@
   const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
 
   let tripData = null;
+  let editMode = false;
 
   /** Migrate old data: note -> notes, ensure location and mapsUrl exist */
   function migrateData(data) {
@@ -245,8 +246,10 @@
     if (titleEl) {
       titleEl.textContent = tripData.title || "My Trip";
       titleEl.dataset.placeholder = "Trip title";
+      titleEl.contentEditable = editMode ? "true" : "false";
     }
 
+    const ce = editMode ? "true" : "false";
     const today = new Date().toISOString().slice(0, 10);
     const parseDayDate = (d) => {
       if (!d) return "";
@@ -261,13 +264,13 @@
           const isCurrentDay = dayDate && dayDate === today;
           const expanded = dayIndex === 0 || isCurrentDay;
           return `
-        <article class="day-card ${expanded ? "expanded" : ""}" data-day="${dayIndex}">
+        <article class="day-card ${expanded ? "expanded" : ""} ${editMode ? "" : "view-mode"}" data-day="${dayIndex}">
           <div class="day-header day-header-sticky" role="button" tabindex="0" aria-expanded="${expanded}">
             <div>
-              <h3 contenteditable="true" data-field="label">${escapeHtml(day.label)}</h3>
+              <h3 contenteditable="${ce}" data-field="label">${escapeHtml(day.label)}</h3>
               <p class="day-meta">
-                <span contenteditable="true" data-field="date">${escapeHtml(day.date)}</span>
-                <span class="day-location" contenteditable="true" data-field="location">${escapeHtml(day.location)}</span>
+                <span contenteditable="${ce}" data-field="date">${escapeHtml(day.date)}</span>
+                <span class="day-location" contenteditable="${ce}" data-field="location">${escapeHtml(day.location)}</span>
               </p>
             </div>
             <svg class="day-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -287,7 +290,7 @@
                     return `
                 <div class="timeline-item" data-day="${dayIndex}" data-item="${itemIndex}">
                   <div class="timeline-time-col">
-                    <span class="timeline-time" contenteditable="true" data-field="time">${escapeHtml(item.time || "")}</span>
+                    <span class="timeline-time" contenteditable="${ce}" data-field="time">${escapeHtml(item.time || "")}</span>
                   </div>
                   <div class="timeline-track-col">
                     <div class="timeline-dot"></div>
@@ -297,22 +300,22 @@
                     <div class="timeline-card ${iconType ? "timeline-card--" + iconType : ""}" data-activity-type="${escapeHtml(iconType)}">
                       <div class="timeline-card-compact" role="button" tabindex="0">
                         <div class="timeline-card-top-left">
-                          <span class="timeline-time-inline" contenteditable="true" data-field="time">${escapeHtml(item.time || "")}</span>
+                          <span class="timeline-time-inline" contenteditable="${ce}" data-field="time">${escapeHtml(item.time || "")}</span>
                           <span class="timeline-activity-icon" aria-hidden="true">${iconSvg}</span>
-                          <p class="timeline-activity" contenteditable="true" data-field="activity">${escapeHtml(formatForDisplay(item.activity || ""))}</p>
+                          <p class="timeline-activity" contenteditable="${ce}" data-field="activity">${escapeHtml(formatForDisplay(item.activity || ""))}</p>
                         </div>
-                        <button type="button" class="btn btn-ghost btn-icon btn-remove" aria-label="Remove item">×</button>
+                        ${editMode ? '<button type="button" class="btn btn-ghost btn-icon btn-remove" aria-label="Remove item">×</button>' : ""}
                       </div>
                         <div class="timeline-card-expanded">
                         <div class="timeline-card-location-row">
                           ${location ? PIN_ICON : ""}
-                          <h4 class="timeline-location" contenteditable="true" data-field="location" data-placeholder="Location">${escapeHtml(location)}</h4>
+                          <h4 class="timeline-location" contenteditable="${ce}" data-field="location" data-placeholder="Location">${escapeHtml(location)}</h4>
                         </div>
                         <div class="timeline-card-maps-row">
-                          <input type="text" class="timeline-maps-input" data-field="mapsUrl" placeholder="Paste Maps URL or address..." value="${escapeHtml(mapsUrl)}" />
+                          <input type="text" class="timeline-maps-input" data-field="mapsUrl" placeholder="Paste Maps URL or address..." value="${escapeHtml(mapsUrl)}" ${editMode ? "" : 'readonly'} />
                           <button type="button" class="btn btn-secondary btn-sm btn-map" data-action="open-maps">Open in Maps</button>
                         </div>
-                        ${notes ? `<div class="timeline-notes" contenteditable="true" data-field="notes">${escapeHtml(formatForDisplay(notes))}</div>` : '<div class="timeline-notes" contenteditable="true" data-field="notes" data-placeholder="Add note..."></div>'}
+                        ${notes ? `<div class="timeline-notes" contenteditable="${ce}" data-field="notes">${escapeHtml(formatForDisplay(notes))}</div>` : '<div class="timeline-notes" contenteditable="' + ce + '" data-field="notes" data-placeholder="Add note..."></div>'}
                       </div>
                     </div>
                   </div>
@@ -322,10 +325,10 @@
                 )
                 .join("")}
             </div>
-            <div class="day-actions">
+            ${editMode ? `<div class="day-actions">
               <button type="button" class="btn btn-ghost btn-sm" data-action="add-item">+ Add activity</button>
               ${tripData.days.length > 1 ? `<button type="button" class="btn btn-ghost btn-sm btn-danger" data-action="remove-day">Remove day</button>` : ""}
-            </div>
+            </div>` : ""}
           </div>
         </article>
       `;
@@ -345,9 +348,10 @@
 
     const addDayWrap = document.createElement("div");
     addDayWrap.className = "day-add-section";
-    addDayWrap.innerHTML = '<button type="button" class="btn btn-secondary" id="btn-add-day">+ Add day</button>';
-    container.appendChild(addDayWrap);
+    addDayWrap.innerHTML = editMode ? '<button type="button" class="btn btn-secondary" id="btn-add-day">+ Add day</button>' : "";
+    if (addDayWrap.innerHTML) container.appendChild(addDayWrap);
 
+    updateModeButton();
     bindTripEvents();
   }
 
@@ -658,10 +662,29 @@
     };
   }
 
+  function updateModeButton() {
+    const btn = $("#btn-mode");
+    if (btn) {
+      btn.textContent = editMode ? "View" : "Edit";
+      btn.title = editMode ? "Switch to view mode" : "Switch to edit mode";
+    }
+  }
+
+  function initModeToggle() {
+    const btn = $("#btn-mode");
+    if (btn) {
+      btn.onclick = () => {
+        editMode = !editMode;
+        renderTrip();
+      };
+    }
+  }
+
   function init() {
     initUpload();
     initShareModal();
     initNewTrip();
+    initModeToggle();
 
     // Priority: URL hash > localStorage > upload screen
     let data = loadFromUrlHash();

@@ -115,6 +115,14 @@ body {
   color: var(--color-text-muted);
 }
 
+.trip-title[contenteditable="false"] {
+  cursor: default;
+}
+
+.trip-title[contenteditable="false"]:focus {
+  outline: none;
+}
+
 .header-actions {
   display: flex;
   gap: 0.75rem;
@@ -325,6 +333,21 @@ body {
 
 .day-card.expanded .day-toggle {
   transform: rotate(180deg);
+}
+
+.day-card.view-mode [contenteditable="false"] {
+  cursor: default;
+}
+
+.day-card.view-mode [contenteditable="false"]:focus {
+  outline: none;
+  border-color: transparent;
+  background: transparent;
+}
+
+.day-card.view-mode .timeline-maps-input[readonly] {
+  cursor: default;
+  background: var(--color-surface-alt);
 }
 
 .day-body {
